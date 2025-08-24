@@ -145,7 +145,7 @@ curl http://localhost:3000
 
 ## 🛠️ Challenges Encountered & Solutions
 
-## 	Challenge	Fix
+## 	Challenge	                                                               ✅ Fix
 
 1	Self-hosted runner stuck → "Listening for Jobs" but blocked terminal	  ✅ Ran sudo ./svc.sh start to launch as system service, freeing terminal
 
