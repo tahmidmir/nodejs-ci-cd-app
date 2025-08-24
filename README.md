@@ -1,10 +1,10 @@
-🚀 Node.js CI/CD Pipeline with GitHub Actions & AWS EC2
+## 🚀 Node.js CI/CD Pipeline with GitHub Actions & AWS EC2
 
 This project demonstrates a production-grade CI/CD pipeline for a Node.js application using GitHub Actions and a self-hosted runner on AWS EC2.
 
 The pipeline ensures reliable testing, artifact management, and automated deployment with PM2 process manager for zero-downtime server operation.
 
-✨ Features
+## ✨ Features
 
 ✅ Automated unit testing on every push & pull request
 
