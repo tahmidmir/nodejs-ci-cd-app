@@ -1,49 +1,123 @@
+🚀 Node.js CI/CD Pipeline with GitHub Actions & AWS EC2
 
+This project demonstrates a production-grade CI/CD pipeline for a Node.js application using GitHub Actions and a self-hosted runner on AWS EC2.
 
-## Prerequisites
+The pipeline ensures reliable testing, artifact management, and automated deployment with PM2 process manager for zero-downtime server operation.
 
-- Node Version 22
+✨ Features
 
+✅ Automated unit testing on every push & pull request
 
-### 1. For Run This Applications
-```bash
-# install packages
-npm install 
+📦 Artifact management for test results & logs
 
-# Testing The Applications
-npm run check
+☁️ Continuous Deployment to AWS EC2 (self-hosted runner)
 
-# For Run the application
-npm start
-```
+🔄 Process management & monitoring with PM2
 
+🔍 Built-in application health checks after deployment
 
-### Deployment Process
-1. **Cleanup**: Removes existing process if running
-   ```bash
-   pm2 delete node-app || true
-   ```
+🏗️ Pipeline Architecture
+flowchart TD
+    A[Developer Push/PR] --> B[Test Job - GitHub Runner]
+    B -->|Run Jest/Mocha Tests| C[Upload Test Results as Artifact]
+    C --> D[Deploy Job - Self-hosted EC2 Runner]
+    D -->|Download Artifact| E[Deploy with PM2]
+    E --> F[Health Check - curl localhost:3000]
+    F --> G[Running Application 🎉]
 
-2. **Start Application**: Launches with absolute path
-   ```bash
-   pm2 start "./src/server.js" --name node-app
-   ```
+1. Test Job (GitHub-hosted Runner)
 
-3. **Save Process List**: Persists PM2 configuration
-   ```bash
-   pm2 save
-   ```
+Checks out repository
 
-### About The Applications
-1. **Route**: This Application has 2 route
-   ```bash
-   / # this will show a hello world page
-   ```
-      ```bash
-   /api # this will response a json
-   ```
+Sets up Node.js environment
 
-2. **Default Port**: By Default this application will run on port 3000
+Installs dependencies
 
+Runs tests & captures results
 
+Uploads results as artifact
 
+2. Deploy Job (EC2 Self-hosted Runner)
+
+Downloads test artifact
+
+Displays results for verification
+
+Deploys Node.js app with PM2
+
+Performs health check to ensure availability
+
+⚙️ Setup Instructions
+1. Clone Repository
+git clone https://github.com/tahmidmir/nodejs-ci-cd-app.git
+cd nodejs-ci-cd-app
+
+2. Configure GitHub Actions Workflow
+
+Create .github/workflows/ci-cd.yml with test & deploy jobs. Example structure:
+
+name: Node.js CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - run: npm install
+      - run: npm test
+      - uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: test-results.txt
+
+  deploy:
+    runs-on: self-hosted
+    needs: test
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: test-results
+          path: ./test-results
+      - run: cat ./test-results/test-results.txt
+      - run: pm2 restart src/server.js || pm2 start src/server.js --name nodejs-app
+      - run: curl http://localhost:3000
+
+3. Setup Self-Hosted Runner on AWS EC2
+# Update & install dependencies
+sudo apt update && sudo apt upgrade -y
+sudo apt install nodejs npm git -y
+
+# Install PM2
+sudo npm install -g pm2
+
+# Register GitHub self-hosted runner
+mkdir actions-runner && cd actions-runner
+curl -o actions-runner-linux-x64.tar.gz -L https://github.com/actions/runner/releases/download/v2.x.x/actions-runner-linux-x64-x.x.x.tar.gz
+tar xzf ./actions-runner-linux-x64.tar.gz
+./config.sh --url https://github.com/tahmidmir/nodejs-ci-cd-app --token <YOUR_TOKEN>
+sudo ./svc.sh install
+sudo ./svc.sh start
+
+🛠️ Challenges Encountered & Solutions
+#	Challenge	Fix
+1	Self-hosted runner stuck → "Listening for Jobs" but blocked terminal	✅ Ran sudo ./svc.sh start to launch as system service, freeing terminal
+2	Git push errors due to wrong folder / credentials	✅ Navigated to correct folder nodejs-ci-cd-app before git push
+✅ Used GitHub PAT instead of password
+3	Invalid package.json → EJSONPARSE error	✅ Rewrote JSON properly: correct braces, double quotes, no trailing commas
+4	Test module errors → missing files/dependencies	✅ Fixed test file paths (../src/server.js)
+✅ Removed redundant test files
+✅ Installed missing dev dependencies (chai, chai-http)
+5	Server not starting → index.js missing	✅ Created src/server.js with Express app and exports for tests
+✅ Started via pm2 start src/server.js
+6	PM2 permission denied (EACCES)	✅ Installed with sudo npm install -g pm2
+✅ Alternative: npm install pm2 --save-dev + npx pm2
+7	Deploy job not running in GitHub Actions	✅ Updated ci-cd.yml with proper job dependencies (needs: test) and added deploy steps
