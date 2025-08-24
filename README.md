@@ -17,7 +17,9 @@ The pipeline ensures reliable testing, artifact management, and automated deploy
 🔍 Built-in application health checks after deployment
 
 🏗️ Pipeline Architecture
-flowchart TD
+
+## flowchart TD
+
     A[Developer Push/PR] --> B[Test Job - GitHub Runner]
     B -->|Run Jest/Mocha Tests| C[Upload Test Results as Artifact]
     C --> D[Deploy Job - Self-hosted EC2 Runner]
@@ -25,7 +27,7 @@ flowchart TD
     E --> F[Health Check - curl localhost:3000]
     F --> G[Running Application 🎉]
 
-1. Test Job (GitHub-hosted Runner)
+##  Test Job (GitHub-hosted Runner)
 
 Checks out repository
 
@@ -37,7 +39,8 @@ Runs tests & captures results
 
 Uploads results as artifact
 
-2. Deploy Job (EC2 Self-hosted Runner)
+## Workflow File
+workflow to ensure proper connection. Create/update .github/workflows/ci-cd-pipeline.yml:Deploy Job (EC2 Self-hosted Runner)
 
 Downloads test artifact
 
@@ -47,12 +50,12 @@ Deploys Node.js app with PM2
 
 Performs health check to ensure availability
 
-⚙️ Setup Instructions
+## ⚙️ Setup Instructions
 1. Clone Repository
 git clone https://github.com/tahmidmir/nodejs-ci-cd-app.git
 cd nodejs-ci-cd-app
 
-2. Configure GitHub Actions Workflow
+## 2. Configure GitHub Actions Workflow
 
 Create .github/workflows/ci-cd.yml with test & deploy jobs. Example structure:
 
@@ -91,7 +94,7 @@ jobs:
       - run: pm2 restart src/server.js || pm2 start src/server.js --name nodejs-app
       - run: curl http://localhost:3000
 
-3. Setup Self-Hosted Runner on AWS EC2
+## 3. Setup Self-Hosted Runner on AWS EC2
 # Update & install dependencies
 sudo apt update && sudo apt upgrade -y
 sudo apt install nodejs npm git -y
@@ -107,17 +110,54 @@ tar xzf ./actions-runner-linux-x64.tar.gz
 sudo ./svc.sh install
 sudo ./svc.sh start
 
-🛠️ Challenges Encountered & Solutions
-#	Challenge	Fix
-1	Self-hosted runner stuck → "Listening for Jobs" but blocked terminal	✅ Ran sudo ./svc.sh start to launch as system service, freeing terminal
+## Step 4: Verify the Runner Connection
+Check the runner status on GitHub:
+
+Go to your repository → Settings → Actions → Runners
+
+Verify your self-hosted runner appears and is "Online"
+
+Check the runner status on your EC2 instance:
+
+Step 5: Test the Connection
+Push the changes to trigger the workflow:
+
+## bash
+git add .github/workflows/ci-cd-pipeline.yml
+git commit -m "Update workflow for EC2 connection"
+git push origin main
+
+## Step 7: Verify Successful Deployment
+Once the workflow completes successfully:
+
+SSH into your EC2 instance:
+
+## bash
+ssh -i your-key.pem ubuntu@your-ec2-public-ip
+Check if the application is running:
+
+## bash
+pm2 status
+curl http://localhost:3000
+
+## 🛠️ Challenges Encountered & Solutions
+
+## 	Challenge	Fix
+
+1	Self-hosted runner stuck → "Listening for Jobs" but blocked terminal	  ✅ Ran sudo ./svc.sh start to launch as system service, freeing terminal
+
 2	Git push errors due to wrong folder / credentials	✅ Navigated to correct folder nodejs-ci-cd-app before git push
 ✅ Used GitHub PAT instead of password
+
 3	Invalid package.json → EJSONPARSE error	✅ Rewrote JSON properly: correct braces, double quotes, no trailing commas
-4	Test module errors → missing files/dependencies	✅ Fixed test file paths (../src/server.js)
-✅ Removed redundant test files
+
+4	Test module errors → missing files/dependencies	✅ Fixed test file paths (../src/server.js) ✅ Removed redundant test files
 ✅ Installed missing dev dependencies (chai, chai-http)
+
 5	Server not starting → index.js missing	✅ Created src/server.js with Express app and exports for tests
 ✅ Started via pm2 start src/server.js
+
 6	PM2 permission denied (EACCES)	✅ Installed with sudo npm install -g pm2
 ✅ Alternative: npm install pm2 --save-dev + npx pm2
+
 7	Deploy job not running in GitHub Actions	✅ Updated ci-cd.yml with proper job dependencies (needs: test) and added deploy steps
