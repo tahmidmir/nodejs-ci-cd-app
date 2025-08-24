@@ -106,8 +106,11 @@ sudo npm install -g pm2
 mkdir actions-runner && cd actions-runner
 curl -o actions-runner-linux-x64.tar.gz -L https://github.com/actions/runner/releases/download/v2.x.x/actions-runner-linux-x64-x.x.x.tar.gz
 tar xzf ./actions-runner-linux-x64.tar.gz
-./config.sh --url https://github.com/tahmidmir/nodejs-ci-cd-app --token <YOUR_TOKEN>
+
+./config.sh --url https://github.com/tahmidmir/nodejs-ci-cd-app --token <ghp_GWM0NeWoKaqINmHv0HxqTqqS2eJabB49AeX>
+
 sudo ./svc.sh install
+
 sudo ./svc.sh start
 
 ## Step 4: Verify the Runner Connection
